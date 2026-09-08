@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>KROM, Direzione B</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#0000A5;--off:#F8FAFA;--ink:#060808;--red:#CF3B16;--bg:#EEF0F1;--k:1}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Archivo",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+  button,a{font-family:inherit}
+  a:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+
+  #intro{position:fixed;inset:0;z-index:30;background:var(--blue);color:var(--off);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:opacity .6s}
+  #intro.out{opacity:0;pointer-events:none}
+  #intro .w{position:relative;height:1.2em;width:100%;font-family:"Anton",Impact,sans-serif;font-size:clamp(64px,16vw,220px);line-height:1;text-transform:uppercase;letter-spacing:-.01em;text-align:center}
+  #intro .w span{position:absolute;left:0;right:0;top:0;opacity:0;transition:opacity .7s}
+  #intro .w span.on{opacity:1}
+  #intro .d{font-family:"IBM Plex Mono",monospace;font-size:13px;opacity:0;transition:opacity .7s;margin-top:18px;text-align:center;padding:0 20px}
+  #intro .d.on{opacity:.9}
+
+  #stage{position:fixed;inset:0;cursor:grab;touch-action:none;overflow:hidden;
+    background:
+      radial-gradient(ellipse 22% 18% at 18% 30%, rgba(0,0,165,.05), transparent 70%),
+      radial-gradient(ellipse 20% 26% at 80% 22%, rgba(0,0,165,.045), transparent 70%),
+      radial-gradient(ellipse 30% 20% at 60% 82%, rgba(0,0,165,.04), transparent 70%),
+      radial-gradient(ellipse 14% 20% at 30% 78%, rgba(0,0,165,.05), transparent 70%),
+      var(--bg)}
+  #stage.drag{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+  .ring{position:absolute;border:1.5px solid rgba(248,250,250,.95);border-radius:50%;pointer-events:none}
+  .it{position:absolute;left:0;top:0}
+  .it .in{width:100%;height:100%;background:#fff}
+  .it img,.it video{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;background:#fff}
+  .it.txt .in{background:var(--blue);color:var(--off);padding:7%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+  .it.txt.w .in{background:var(--off);color:var(--ink)}
+  .it.txt h3{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.92;margin:0;font-size:58px}
+  .it.txt p{margin:.5em 0 0;font-size:22px;line-height:1.35;overflow:hidden}
+  .it.txt small{font-family:"IBM Plex Mono",monospace;font-size:15px;opacity:.75}
+
+  header{position:fixed;left:0;right:0;top:0;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:10;pointer-events:none}
+  header>*{pointer-events:auto}
+  header img{height:28px;width:auto}
+  header .t{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--blue)}
+  header .sp{flex:1}
+  .btn{font:600 13px "Archivo",Arial,sans-serif;color:var(--blue);background:var(--off);border:1px solid var(--blue);padding:10px 14px;text-decoration:none;border-radius:999px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .btn:hover{background:var(--blue);color:var(--off)}
+  #count{position:fixed;left:16px;bottom:22px;z-index:10;height:44px;padding:0 16px;border-radius:999px;background:var(--off);color:var(--blue);display:flex;align-items:center;gap:8px;font:500 13px "IBM Plex Mono",monospace;box-shadow:0 2px 10px rgba(0,0,0,.08);pointer-events:none}
+  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:10;background:var(--blue);color:var(--off);border-radius:999px;padding:12px 18px;font:600 13px "Archivo",Arial,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.12);white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
+  #reset{position:fixed;right:16px;bottom:22px;z-index:10}
+  @media (max-width:700px){
+    header .t{display:none}
+    #count{left:12px;bottom:auto;top:66px;height:36px;padding:0 12px;font-size:12px}
+    #hint{bottom:78px;font-size:12px;padding:10px 14px}
+    #reset{right:12px;bottom:18px}
+  }
+
+  #lb{position:fixed;inset:0;z-index:20;background:var(--ink);display:none;flex-direction:column;overflow:auto;-webkit-overflow-scrolling:touch}
+  #lb.on{display:flex}
+  #lb .top{position:sticky;top:0;display:flex;align-items:center;gap:10px;padding:12px 16px;z-index:2;background:var(--ink)}
+  #lb .top .n{font:12px "IBM Plex Mono",monospace;color:var(--off);opacity:.8;margin-left:auto}
+  #lb .view{display:flex;align-items:center;justify-content:center;padding:8px 12px;min-height:calc(100vh - 210px);min-height:calc(100dvh - 210px);touch-action:pan-y}
+  #lb .view img,#lb .view video{width:auto;height:auto;max-width:100%;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px);object-fit:contain;display:block;background:#fff}
+  #lb .view .card{background:var(--blue);color:var(--off);padding:clamp(22px,4vw,48px);max-width:820px;width:100%;font-size:clamp(17px,2vw,22px);line-height:1.45}
+  #lb .view .card.w{background:var(--off);color:var(--ink)}
+  #lb .view .card h3{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(34px,6vw,72px);line-height:.92;margin:0 0 .5em}
+  #lb .view .card small{display:block;font:500 12px "IBM Plex Mono",monospace;opacity:.75;margin-top:1.4em}
+  #lb .bar{position:sticky;bottom:0;background:var(--ink);display:flex;align-items:flex-start;gap:12px;padding:14px 16px 20px;z-index:2}
+  #lb .bar .cap{flex:1;color:var(--off);font-size:16px;line-height:1.45;max-width:70ch}
+  #lb .bar .cap b{display:block;font:500 12px "IBM Plex Mono",monospace;opacity:.7;margin-bottom:6px}
+  #lb .arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:3;width:48px;height:48px;border-radius:50%;border:0;background:var(--off);color:var(--blue);font-size:22px;cursor:pointer;opacity:.92}
+  #lb .arrow.l{left:12px}#lb .arrow.r{right:12px}
+  #lb .mini{display:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--off);color:var(--blue);font-size:22px;flex:none}
+  @media (max-width:700px){#lb .arrow{display:none} #lb .mini{display:block} #lb .bar .cap{font-size:14px}}
+</style>
+</head>
+<body>
+
+<div id="intro" role="button" tabindex="0" aria-label="Entra">
+  <div class="w"><span id="w1">KROM</span><span id="w2">Direzione B</span></div>
+  <div class="d" id="w3">Draft del 9 settembre 2026. Tocca per entrare.</div>
+</div>
+
+<header>
+  <img src="img/logo_black.png" alt="KROM">
+  <span class="t">Direzione B</span>
+  <span class="sp"></span>
+  <a class="btn" href="leggi.html">Leggi la direzione</a>
+</header>
+
+<div id="stage"><div id="world"><div class="ring" id="ring"></div></div></div>
+
+<div id="count"><span id="cn">0</span><span>pezzi</span></div>
+<div id="hint">Trascina. Zoom con due dita o con la rotellina. Tocca un'immagine per aprirla.</div>
+<button class="btn" id="reset" type="button">Ricomincia</button>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Visore">
+  <div class="top"><button class="btn" id="lbx" type="button">Torna alla spirale</button><span class="n" id="lbn"></span></div>
+  <button class="arrow l" id="pv" type="button" aria-label="Precedente">‹</button>
+  <div class="view" id="lbview"></div>
+  <button class="arrow r" id="nx" type="button" aria-label="Successiva">›</button>
+  <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
+</div>
+
+<script src="captions.js?v=4"></script>
+<script>
+(() => {
+  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [];
+  const DEF = window.DEFAULT_CAPTION || '';
+  const world = document.getElementById('world'), stage = document.getElementById('stage'), ring = document.getElementById('ring');
+  const cn = document.getElementById('cn');
+  const items = [];
+  const TILE = 520;
+
+  /* didascalia di un pezzo: la sua, oppure il blocco, oppure quella di default */
+  function captionFor(key) {
+    if (C[key]) return C[key];
+    const m = /^flow(\d+)$/.exec(key);
+    if (m) { const n = +m[1]; for (const r of RANGES) if (n >= r[0] && n <= r[1]) return r[2]; }
+    return DEF;
+  }
+
+  /* ---------- intro: si entra solo toccando, così i video possono avere l'audio ---------- */
+  const intro = document.getElementById('intro');
+  const w1 = document.getElementById('w1'), w2 = document.getElementById('w2'), w3 = document.getElementById('w3');
+  let entered = false;
+  function enter() {
+    if (entered) return; entered = true;
+    intro.classList.add('out'); setTimeout(() => intro.remove(), 700);
+    // i video partono qui, dentro il gesto dell'utente
+    items.forEach(it => { if (it.kind === 'vid') { it.v.muted = !it.sound; it.v.volume = 0.5; it.v.play().catch(() => { it.v.muted = true; it.v.play().catch(() => {}); }); } });
+  }
+  setTimeout(() => w1.classList.add('on'), 100);
+  setTimeout(() => { w1.classList.remove('on'); w2.classList.add('on'); }, 1500);
+  setTimeout(() => w3.classList.add('on'), 2100);
+  intro.addEventListener('click', enter);
+  intro.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') enter(); });
+
+  /* ---------- sorgenti ---------- */
+  const fixed = (window.FIXED || []).map(n => ({ src: 'img/' + n, key: n.replace(/\.[a-z]+$/, '') }));
+  const flow = []; for (let n = 1; n <= 400; n++) { const k = String(n).padStart(3, '0'); flow.push({ src: 'img/flow/' + k + '.jpg', full: 'img/full/' + k + '.jpg', key: 'flow' + k }); }
+
+  function mkImg(f) {
+    return new Promise(res => {
+      const im = new Image(); im.decoding = 'async'; im.draggable = false; im.alt = '';
+      im.onload = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(im); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'img', key: f.key, src: f.src, full: f.full, ar: im.naturalWidth / im.naturalHeight }); res(true); };
+      im.onerror = () => res(false);
+      im.src = f.src;
+    });
+  }
+  function mkVid(v) {
+    return new Promise(res => {
+      const vd = document.createElement('video'); vd.src = v.src; vd.loop = true; vd.muted = true; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.preload = 'auto';
+      vd.onloadedmetadata = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(vd); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'vid', key: v.key, src: v.src, v: vd, sound: !!v.sound, cap: v.caption || '', ar: (vd.videoWidth / vd.videoHeight) || (16 / 9) }); if (entered) { vd.muted = !v.sound; vd.volume = 0.5; vd.play().catch(() => {}); } res(true); };
+      vd.onerror = () => res(false);
+    });
+  }
+  function mkTxt(t) {
+    const el = document.createElement('div'); el.className = 'it txt' + (t.white ? ' w' : '');
+    el.innerHTML = '<div class="in"><h3>' + t.title + '</h3><p>' + t.body + '</p><small>' + t.tag + '</small></div>';
+    el.dataset.i = items.length; world.appendChild(el);
+    items.push({ el, kind: 'txt', key: t.title, cap: t.body, tag: t.tag, white: !!t.white, ar: 4 / 5 });
+  }
+
+  /* ---------- spirale ---------- */
+  function setBox(it, x, y, w, h) { it.x = x; it.y = y; it.w = w; it.h = h; it.el.style.width = w + 'px'; it.el.style.height = h + 'px'; it.el.style.transform = `translate(${x}px,${y}px)`; }
+  let R = 2000;
+  function layout() {
+    const vids = items.filter(i => i.kind === 'vid'), imgs = items.filter(i => i.kind === 'img'), txts = items.filter(i => i.kind === 'txt');
+    const order = []; let ti = 0;
+    // il primo pezzo è la frase, poi i video vicino al centro, poi le immagini con una card di testo ogni tanto
+    if (txts.length) order.push(txts[ti++]);
+    vids.forEach(v => order.push(v));
+    const every = Math.max(4, Math.round(imgs.length / Math.max(txts.length - 1, 1)));
+    imgs.forEach((it, i) => { order.push(it); if ((i + 1) % every === 0 && ti < txts.length) order.push(txts[ti++]); });
+    while (ti < txts.length) order.push(txts[ti++]);
+    let last = 0;
+    order.forEach((it, i) => {
+      const a = i * 2.39996, r = 400 * Math.sqrt(i + 1);
+      const w = it.kind === 'txt' ? TILE : it.kind === 'vid' ? TILE * 1.3 : TILE * (0.8 + ((i * 7) % 5) * 0.1);
+      const h = it.kind === 'txt' ? TILE * 1.25 : w / Math.max(0.45, Math.min(2.2, it.ar));
+      setBox(it, r * Math.cos(a) - w / 2, r * Math.sin(a) - h / 2, w, h); last = r;
+    });
+    R = last + TILE * 1.2; ring.style.width = ring.style.height = (2 * R) + 'px'; ring.style.transform = `translate(${-R}px,${-R}px)`;
+  }
+
+  /* ---------- pan e zoom ---------- */
+  let s = 0.3, tx = 0, ty = 0, dragging = false, moved = false, lx = 0, ly = 0, pinch = null, downEl = null, touched = false, raf = 0, lastK = -1;
+  const vw = () => innerWidth, vh = () => innerHeight;
+  function apply() {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      world.style.transform = `translate3d(${tx}px,${ty}px,0) scale(${s})`;
+    });
+  }
+  function home(anim) {
+    world.style.transition = anim ? 'transform .8s cubic-bezier(.2,.8,.2,1)' : '';
+    // si parte vicini al centro: ogni pezzo è largo circa 120 px sul computer, 90 sul telefono
+    s = (Math.min(vw(), vh()) < 700 ? 90 : 120) / TILE; tx = vw() / 2; ty = vh() / 2; apply();
+    if (anim) setTimeout(() => world.style.transition = '', 850);
+  }
+  stage.addEventListener('pointerdown', e => { touched = true; world.style.transition = ''; dragging = true; moved = false; downEl = e.target.closest('.it'); lx = e.clientX; ly = e.clientY; stage.classList.add('drag'); try { stage.setPointerCapture(e.pointerId); } catch (_) {} });
+  stage.addEventListener('pointermove', e => { if (!dragging || pinch) return; const dx = e.clientX - lx, dy = e.clientY - ly; if (Math.abs(dx) + Math.abs(dy) > 5) moved = true; tx += dx; ty += dy; lx = e.clientX; ly = e.clientY; apply(); });
+  stage.addEventListener('pointerup', () => { dragging = false; stage.classList.remove('drag');
+    if (!moved && !pinch && downEl) { const it = items[+downEl.dataset.i]; if (it && it.kind === 'vid') { if (it.v.paused) it.v.play().catch(() => {}); else it.v.pause(); } else open(+downEl.dataset.i); }
+    downEl = null; });
+  stage.addEventListener('pointercancel', () => { dragging = false; downEl = null; stage.classList.remove('drag'); });
+  stage.addEventListener('wheel', e => { e.preventDefault(); touched = true; world.style.transition = ''; zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018))); }, { passive: false });
+  function zoomAt(cx, cy, f) { const ns = Math.max(0.05, Math.min(2.5, s * f)); const k = ns / s; tx = cx - (cx - tx) * k; ty = cy - (cy - ty) * k; s = ns; apply(); }
+  stage.addEventListener('touchstart', e => { touched = true; if (e.touches.length === 2) { pinch = dist(e); moved = true; dragging = false; downEl = null; } }, { passive: true });
+  stage.addEventListener('touchmove', e => { if (e.touches.length === 2 && pinch) { const d = dist(e); const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2, cy = (e.touches[0].clientY + e.touches[1].clientY) / 2; zoomAt(cx, cy, d / pinch); pinch = d; } }, { passive: true });
+  stage.addEventListener('touchend', e => { if (e.touches.length < 2) { pinch = null; dragging = false; moved = true; } });
+  function dist(e) { const a = e.touches[0], b = e.touches[1]; return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
+  document.getElementById('reset').onclick = () => home(true);
+  addEventListener('resize', () => { if (!touched) home(false); else apply(); });
+
+  /* ---------- visore: un pezzo alla volta, intero, con la didascalia sotto ---------- */
+  const lb = document.getElementById('lb'), lbview = document.getElementById('lbview'), lbcap = document.getElementById('lbcap'), lbn = document.getElementById('lbn');
+  let cur = -1;
+  function open(i) {
+    cur = (i + items.length) % items.length; const it = items[cur]; lb.classList.add('on'); lbn.textContent = (cur + 1) + ' di ' + items.length;
+    items.forEach(x => { if (x.kind === 'vid') x.v.pause(); });
+    // ferma un eventuale video precedente nel visore
+    lbview.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
+    if (it.kind === 'img') {
+      const im = new Image(); im.alt = ''; im.src = it.full || it.src; im.onerror = () => { if (im.src.indexOf(it.src) < 0) im.src = it.src; };
+      lbview.innerHTML = ''; lbview.appendChild(im);
+      lbcap.innerHTML = '<b>' + it.key + '</b>' + captionFor(it.key);
+    } else if (it.kind === 'vid') {
+      const v = document.createElement('video'); v.src = it.src; v.loop = true; v.controls = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.muted = !it.sound; v.volume = 0.5;
+      lbview.innerHTML = ''; lbview.appendChild(v); v.play().catch(() => {});
+      lbcap.innerHTML = '<b>' + it.key + '</b>' + (it.cap || DEF);
+    } else {
+      lbview.innerHTML = `<div class="card${it.white ? ' w' : ''}"><h3>${it.key}</h3>${it.cap}<small>${it.tag}</small></div>`;
+      lbcap.innerHTML = '<b>' + it.tag + '</b>';
+    }
+    lb.scrollTop = 0;
+  }
+  function close() { lb.classList.remove('on'); lbview.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; }); items.forEach(x => { if (x.kind === 'vid') x.v.play().catch(() => {}); }); }
+  document.getElementById('lbx').onclick = close;
+  document.getElementById('pv').onclick = () => open(cur - 1);
+  document.getElementById('nx').onclick = () => open(cur + 1);
+  document.getElementById('pv2').onclick = () => open(cur - 1);
+  document.getElementById('nx2').onclick = () => open(cur + 1);
+  addEventListener('keydown', e => { if (!lb.classList.contains('on')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight') open(cur + 1); if (e.key === 'ArrowLeft') open(cur - 1); });
+  let sx = 0, sy = 0;
+  lbview.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  lbview.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) open(dx < 0 ? cur + 1 : cur - 1); });
+
+  /* ---------- avvio ---------- */
+  (async () => {
+    for (const f of fixed) await mkImg(f);
+    TEXTS.forEach(mkTxt);
+    for (const v of VIDEOS) await mkVid(v);
+    cn.textContent = items.length; layout(); home(false);
+    for (let i = 0; i < flow.length; i += 16) {
+      const r = await Promise.all(flow.slice(i, i + 16).map(mkImg)); const ok = r.filter(Boolean).length;
+      cn.textContent = items.length; layout(); if (!touched) home(false);
+      if (ok === 0) break;
+    }
+    layout(); if (!touched) home(false);
+  })();
+})();
+</script>
+</body>
+</html>
