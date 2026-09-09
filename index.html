@@ -7,7 +7,7 @@
 <title>KROM, Direzione B</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{--blue:#0000A5;--off:#F8FAFA;--ink:#060808;--red:#CF3B16;--bg:#EEF0F1;--k:1}
+  :root{--blue:#0000A5;--off:#F8FAFA;--ink:#060808;--red:#CF3B16;--bg:#EEF0F1}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Archivo",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
   button,a{font-family:inherit}
@@ -27,25 +27,11 @@
   #concept .k{font:500 13px "IBM Plex Mono",monospace;color:var(--blue);margin:0 0 18px}
   #concept h2{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(38px,7vw,80px);line-height:.92;color:var(--blue);margin:0 0 .4em}
   #concept p{margin:0 0 1em;max-width:60ch}
-  #concept .btn.p{background:var(--blue);color:var(--off);font-size:15px;padding:14px 22px;margin-top:8px}
-  #stage{position:fixed;inset:0;cursor:grab;touch-action:none;overflow:hidden;
-    background:
-      radial-gradient(ellipse 22% 18% at 18% 30%, rgba(0,0,165,.05), transparent 70%),
-      radial-gradient(ellipse 20% 26% at 80% 22%, rgba(0,0,165,.045), transparent 70%),
-      radial-gradient(ellipse 30% 20% at 60% 82%, rgba(0,0,165,.04), transparent 70%),
-      radial-gradient(ellipse 14% 20% at 30% 78%, rgba(0,0,165,.05), transparent 70%),
-      var(--bg)}
+
+  #stage{position:fixed;inset:0;cursor:grab;touch-action:none;overflow:hidden;background:var(--bg)}
   #stage.drag{cursor:grabbing}
-  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-  .ring{position:absolute;border:1.5px solid rgba(248,250,250,.95);border-radius:50%;pointer-events:none}
-  .it{position:absolute;left:0;top:0}
-  .it .in{width:100%;height:100%;background:#fff}
-  .it img,.it video{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none;background:#fff}
-  .it.txt .in{background:var(--blue);color:var(--off);padding:7%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
-  .it.txt.w .in{background:var(--off);color:var(--ink)}
-  .it.txt h3{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;line-height:.92;margin:0;font-size:58px}
-  .it.txt p{margin:.5em 0 0;font-size:22px;line-height:1.35;overflow:hidden}
-  .it.txt small{font-family:"IBM Plex Mono",monospace;font-size:15px;opacity:.75}
+  canvas{display:block;width:100%;height:100%}
+  #media{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
 
   header{position:fixed;left:0;right:0;top:0;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:10;pointer-events:none}
   header>*{pointer-events:auto}
@@ -54,6 +40,7 @@
   header .sp{flex:1}
   .btn{font:600 13px "Archivo",Arial,sans-serif;color:var(--blue);background:var(--off);border:1px solid var(--blue);padding:10px 14px;text-decoration:none;border-radius:999px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.06)}
   .btn:hover{background:var(--blue);color:var(--off)}
+  .btn.p{background:var(--blue);color:var(--off);font-size:15px;padding:14px 22px;margin-top:8px}
   #count{position:fixed;left:16px;bottom:22px;z-index:10;height:44px;padding:0 16px;border-radius:999px;background:var(--off);color:var(--blue);display:flex;align-items:center;gap:8px;font:500 13px "IBM Plex Mono",monospace;box-shadow:0 2px 10px rgba(0,0,0,.08);pointer-events:none}
   #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:10;background:var(--blue);color:var(--off);border-radius:999px;padding:12px 18px;font:600 13px "Archivo",Arial,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.12);white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
   #reset{position:fixed;right:16px;bottom:22px;z-index:10}
@@ -108,7 +95,7 @@
   <a class="btn" href="leggi.html">Leggi la direzione</a>
 </header>
 
-<div id="stage"><div id="world"><div class="ring" id="ring"></div></div></div>
+<div id="stage"><canvas id="cv"></canvas><div id="media"></div></div>
 
 <div id="count"><span id="cn">0</span><span>pezzi</span></div>
 <div id="hint">Trascina. Pinch o rotellina per lo zoom. Tocca per aprire.</div>
@@ -122,82 +109,72 @@
   <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
 </div>
 
-<script src="captions.js?v=8"></script>
+<script src="captions.js?v=9"></script>
 <script>
 (() => {
-  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [], SKIP = new Set(window.SKIP || []);
-  const DEF = window.DEFAULT_CAPTION || '';
-  const world = document.getElementById('world'), stage = document.getElementById('stage'), ring = document.getElementById('ring');
-  const cn = document.getElementById('cn');
-  const items = [];
-  const TILE = 520;
+  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], VIDEOS = window.VIDEOS || [], SKIP = new Set(window.SKIP || []);
+  const BLUE = '#0000A5', OFF = '#F8FAFA', INK = '#060808';
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d', { alpha: false });
+  const stage = document.getElementById('stage'), mediaBox = document.getElementById('media'), cn = document.getElementById('cn');
+  const items = []; const TILE = 520; let R = 2000;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
 
-  /* didascalia di un pezzo: la sua, oppure il blocco, oppure quella di default */
-  function captionFor(key) {
-    if (C[key]) return C[key];
-    const m = /^flow(\d+)$/.exec(key);
-    if (m) { const n = +m[1]; for (const r of RANGES) if (n >= r[0] && n <= r[1]) return r[2]; }
-    return DEF;
-  }
-
-  /* ---------- intro: si entra solo toccando, così i video possono avere l'audio ---------- */
-  const intro = document.getElementById('intro');
+  /* ---------- intro e concept ---------- */
+  const intro = document.getElementById('intro'), concept = document.getElementById('concept');
   const w1 = document.getElementById('w1'), w2 = document.getElementById('w2'), w3 = document.getElementById('w3');
-  let entered = false;
-  const concept = document.getElementById('concept');
-  function enter() {
-    if (entered) return; entered = true;
-    intro.classList.add('out'); setTimeout(() => intro.remove(), 700);
-    concept.classList.add('on'); concept.scrollTop = 0;
-  }
-  let started = false;
+  let entered = false, started = false;
+  function enter() { if (entered) return; entered = true; intro.classList.add('out'); setTimeout(() => intro.remove(), 700); concept.classList.add('on'); concept.scrollTop = 0; }
   function go() {
-    if (started) return; started = true;
-    concept.classList.remove('on');
-    // i video partono qui, dentro il gesto dell'utente: così possono avere l'audio
+    if (started) return; started = true; concept.classList.remove('on');
     items.forEach(it => { if (it.kind === 'vid') { it.v.muted = !it.sound; it.v.volume = 0.5; it.v.play().catch(() => { it.v.muted = true; it.v.play().catch(() => {}); }); } });
+    draw();
   }
-  document.getElementById('go').addEventListener('click', go);
   setTimeout(() => w1.classList.add('on'), 100);
   setTimeout(() => { w1.classList.remove('on'); w2.classList.add('on'); }, 1500);
   setTimeout(() => w3.classList.add('on'), 2100);
   intro.addEventListener('click', enter);
   intro.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') enter(); });
+  document.getElementById('go').addEventListener('click', go);
 
   /* ---------- sorgenti ---------- */
   const fixed = (window.FIXED || []).map(n => ({ src: 'img/' + n, key: n.replace(/\.[a-z]+$/, '') }));
   const flow = []; for (let n = 1; n <= 400; n++) { const k = String(n).padStart(3, '0'); if (SKIP.has('flow' + k)) continue; flow.push({ src: 'img/flow/' + k + '.jpg', full: 'img/full/' + k + '.jpg', key: 'flow' + k }); }
 
+  async function thumb(im) { // una copia piccola per la spirale: disegnare 140 foto da 480 px è leggero
+    try { if (window.createImageBitmap) { const w = Math.min(im.naturalWidth, 480); return await createImageBitmap(im, { resizeWidth: w, resizeQuality: 'high' }); } } catch (_) {}
+    return im;
+  }
   function mkImg(f) {
     if (SKIP.has(f.key)) return Promise.resolve(true);
     return new Promise(res => {
-      const im = new Image(); im.decoding = 'async'; im.draggable = false; im.alt = '';
-      im.onload = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(im); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'img', key: f.key, src: f.src, full: f.full, ar: im.naturalWidth / im.naturalHeight }); res(true); };
+      const im = new Image(); im.decoding = 'async';
+      im.onload = async () => { const bmp = await thumb(im); items.push({ kind: 'img', key: f.key, src: f.src, full: f.full, bmp, ar: im.naturalWidth / im.naturalHeight }); res(true); };
       im.onerror = () => res(false);
       im.src = f.src;
     });
   }
   function mkVid(v) {
     return new Promise(res => {
-      const vd = document.createElement('video'); vd.src = v.src; vd.loop = true; vd.muted = true; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.preload = 'auto';
-      vd.onloadedmetadata = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(vd); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'vid', key: v.key, src: v.src, v: vd, sound: !!v.sound, cap: v.caption || '', ar: (vd.videoWidth / vd.videoHeight) || (16 / 9) }); if (started) { vd.muted = !v.sound; vd.volume = 0.5; vd.play().catch(() => {}); } res(true); };
+      const vd = document.createElement('video'); vd.src = v.src; vd.loop = true; vd.muted = true; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.preload = 'auto'; mediaBox.appendChild(vd);
+      vd.onloadedmetadata = () => { items.push({ kind: 'vid', key: v.key, src: v.src, v: vd, sound: !!v.sound, cap: v.caption || '', ar: (vd.videoWidth / vd.videoHeight) || 16 / 9 }); if (started) { vd.muted = !v.sound; vd.volume = 0.5; vd.play().catch(() => {}); } res(true); };
       vd.onerror = () => res(false);
     });
   }
+  // le card di testo si disegnano una volta su un canvas nascosto
+  function wrap(g, text, x, y, maxW, lh) { const words = text.split(' '); let line = ''; for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { g.fillText(line, x, y); y += lh; line = w; } else line = t; } if (line) { g.fillText(line, x, y); y += lh; } return y; }
   function mkTxt(t) {
-    const el = document.createElement('div'); el.className = 'it txt' + (t.white ? ' w' : '');
-    el.innerHTML = '<div class="in"><h3>' + t.title + '</h3><p>' + t.body + '</p><small>' + t.tag + '</small></div>';
-    el.dataset.i = items.length; world.appendChild(el);
-    items.push({ el, kind: 'txt', key: t.title, cap: t.body, tag: t.tag, white: !!t.white, ar: 4 / 5 });
+    const W = 1040, H = 1300, pad = 76; const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    g.fillStyle = t.white ? OFF : BLUE; g.fillRect(0, 0, W, H); g.fillStyle = t.white ? INK : OFF; g.textBaseline = 'top';
+    g.font = '116px Anton, Impact, sans-serif'; let y = wrap(g, t.title.toUpperCase(), pad, pad, W - pad * 2, 108);
+    g.font = '42px Archivo, Arial, sans-serif'; y = wrap(g, t.body, pad, y + 30, W - pad * 2, 56);
+    g.font = '500 28px "IBM Plex Mono", Menlo, monospace'; g.globalAlpha = .75; g.fillText(t.tag || '', pad, H - pad - 28); g.globalAlpha = 1;
+    items.push({ kind: 'txt', key: t.title, cap: t.body, tag: t.tag, white: !!t.white, bmp: c, ar: W / H });
   }
 
   /* ---------- spirale ---------- */
-  function setBox(it, x, y, w, h) { it.x = x; it.y = y; it.w = w; it.h = h; it.el.style.width = w + 'px'; it.el.style.height = h + 'px'; it.el.style.transform = `translate(${x}px,${y}px)`; }
-  let R = 2000;
   function layout() {
     const vids = items.filter(i => i.kind === 'vid'), imgs = items.filter(i => i.kind === 'img'), txts = items.filter(i => i.kind === 'txt');
     const order = []; let ti = 0;
-    // il primo pezzo è la frase, poi i video vicino al centro, poi le immagini con una card di testo ogni tanto
     if (txts.length) order.push(txts[ti++]);
     vids.forEach(v => order.push(v));
     const every = Math.max(4, Math.round(imgs.length / Math.max(txts.length - 1, 1)));
@@ -208,65 +185,90 @@
       const a = i * 2.39996, r = 400 * Math.sqrt(i + 1);
       const w = it.kind === 'txt' ? TILE : it.kind === 'vid' ? TILE * 1.3 : TILE * (0.8 + ((i * 7) % 5) * 0.1);
       const h = it.kind === 'txt' ? TILE * 1.25 : w / Math.max(0.45, Math.min(2.2, it.ar));
-      setBox(it, r * Math.cos(a) - w / 2, r * Math.sin(a) - h / 2, w, h); last = r;
+      it.x = r * Math.cos(a) - w / 2; it.y = r * Math.sin(a) - h / 2; it.w = w; it.h = h; it.z = i; last = r;
     });
-    R = last + TILE * 1.2; ring.style.width = ring.style.height = (2 * R) + 'px'; ring.style.transform = `translate(${-R}px,${-R}px)`;
+    items.sort((a, b) => a.z - b.z);
+    R = last + TILE * 1.2;
   }
 
-  /* ---------- pan e zoom ---------- */
-  let s = 0.3, tx = 0, ty = 0, dragging = false, moved = false, lx = 0, ly = 0, pinch = null, downEl = null, touched = false, raf = 0, lastK = -1;
+  /* ---------- disegno ---------- */
+  let s = 0.2, tx = 0, ty = 0, raf = 0;
   const vw = () => innerWidth, vh = () => innerHeight;
-  function apply() {
+  function size() { cv.width = Math.round(vw() * dpr); cv.height = Math.round(vh() * dpr); }
+  function draw() {
     if (raf) return;
     raf = requestAnimationFrame(() => {
       raf = 0;
-      world.style.transform = `translate3d(${tx}px,${ty}px,0) scale(${s})`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#EEF0F1'; ctx.fillRect(0, 0, cv.width, cv.height);
+      // macchie leggere in blu, come lo sfondo di Soot
+      const W = cv.width, H = cv.height;
+      [[.18, .30, .22], [.80, .22, .20], [.60, .82, .30], [.30, .78, .14]].forEach(([x, y, r]) => { const gr = ctx.createRadialGradient(W * x, H * y, 0, W * x, H * y, W * r); gr.addColorStop(0, 'rgba(0,0,165,.05)'); gr.addColorStop(1, 'rgba(0,0,165,0)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); });
+      ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * tx, dpr * ty);
+      // anello
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.lineWidth = 1.5 / s; ctx.strokeStyle = 'rgba(248,250,250,.95)'; ctx.stroke();
+      // solo i pezzi dentro lo schermo
+      const x0 = -tx / s, y0 = -ty / s, x1 = (vw() - tx) / s, y1 = (vh() - ty) / s;
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium';
+      let anyVideo = false;
+      for (const it of items) {
+        if (it.x + it.w < x0 || it.x > x1 || it.y + it.h < y0 || it.y > y1) continue;
+        ctx.fillStyle = '#fff'; ctx.fillRect(it.x, it.y, it.w, it.h);
+        if (it.kind === 'vid') { if (it.v.readyState >= 2) { ctx.drawImage(it.v, it.x, it.y, it.w, it.h); if (!it.v.paused) anyVideo = true; } }
+        else if (it.bmp) {
+          // immagine intera dentro la tile, senza deformarla
+          const ar = it.ar || 1; let w = it.w, h = it.w / ar; if (h > it.h) { h = it.h; w = it.h * ar; }
+          ctx.drawImage(it.bmp, it.x + (it.w - w) / 2, it.y + (it.h - h) / 2, w, h);
+        }
+        ctx.lineWidth = 1 / s; ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.strokeRect(it.x, it.y, it.w, it.h);
+      }
+      if (anyVideo && !lb.classList.contains('on')) draw(); // i video si ridisegnano finché suonano
     });
   }
   function home(anim) {
-    world.style.transition = anim ? 'transform .8s cubic-bezier(.2,.8,.2,1)' : '';
-    // si parte vicini al centro: ogni pezzo è largo circa 120 px sul computer, 90 sul telefono
-    s = (Math.min(vw(), vh()) < 700 ? 90 : 120) / TILE; tx = vw() / 2; ty = vh() / 2; apply();
-    if (anim) setTimeout(() => world.style.transition = '', 850);
+    const target = { s: (Math.min(vw(), vh()) < 700 ? 90 : 120) / TILE, tx: vw() / 2, ty: vh() / 2 };
+    if (!anim) { s = target.s; tx = target.tx; ty = target.ty; draw(); return; }
+    const from = { s, tx, ty }, t0 = performance.now();
+    (function step(now) { const p = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - p, 3); s = from.s + (target.s - from.s) * e; tx = from.tx + (target.tx - from.tx) * e; ty = from.ty + (target.ty - from.ty) * e; draw(); if (p < 1) requestAnimationFrame(step); })(t0);
   }
-  stage.addEventListener('pointerdown', e => { touched = true; world.style.transition = ''; dragging = true; moved = false; downEl = e.target.closest('.it'); lx = e.clientX; ly = e.clientY; stage.classList.add('drag'); try { stage.setPointerCapture(e.pointerId); } catch (_) {} });
-  stage.addEventListener('pointermove', e => { if (!dragging || pinch) return; const dx = e.clientX - lx, dy = e.clientY - ly; if (Math.abs(dx) + Math.abs(dy) > 5) moved = true; tx += dx; ty += dy; lx = e.clientX; ly = e.clientY; apply(); });
-  stage.addEventListener('pointerup', () => { dragging = false; stage.classList.remove('drag');
-    if (!moved && !pinch && downEl) { const it = items[+downEl.dataset.i]; if (it && it.kind === 'vid') { if (it.v.paused) it.v.play().catch(() => {}); else it.v.pause(); } else open(+downEl.dataset.i); }
-    downEl = null; });
-  stage.addEventListener('pointercancel', () => { dragging = false; downEl = null; stage.classList.remove('drag'); });
-  stage.addEventListener('wheel', e => { e.preventDefault(); touched = true; world.style.transition = ''; zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018))); }, { passive: false });
-  function zoomAt(cx, cy, f) { const ns = Math.max(0.05, Math.min(2.5, s * f)); const k = ns / s; tx = cx - (cx - tx) * k; ty = cy - (cy - ty) * k; s = ns; apply(); }
-  stage.addEventListener('touchstart', e => { touched = true; if (e.touches.length === 2) { pinch = dist(e); moved = true; dragging = false; downEl = null; } }, { passive: true });
+
+  /* ---------- pan, zoom, tocco ---------- */
+  let dragging = false, moved = false, lx = 0, ly = 0, pinch = null, downAt = null, touched = false;
+  function hit(px, py) { const wx = (px - tx) / s, wy = (py - ty) / s; for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (wx >= it.x && wx <= it.x + it.w && wy >= it.y && wy <= it.y + it.h) return it; } return null; }
+  stage.addEventListener('pointerdown', e => { touched = true; dragging = true; moved = false; downAt = [e.clientX, e.clientY]; lx = e.clientX; ly = e.clientY; stage.classList.add('drag'); try { stage.setPointerCapture(e.pointerId); } catch (_) {} });
+  stage.addEventListener('pointermove', e => { if (!dragging || pinch) return; const dx = e.clientX - lx, dy = e.clientY - ly; if (Math.abs(e.clientX - downAt[0]) + Math.abs(e.clientY - downAt[1]) > 6) moved = true; tx += dx; ty += dy; lx = e.clientX; ly = e.clientY; draw(); });
+  stage.addEventListener('pointerup', e => { dragging = false; stage.classList.remove('drag'); if (!moved && !pinch && downAt) { const it = hit(e.clientX, e.clientY); if (it) { if (it.kind === 'vid') { if (it.v.paused) it.v.play().catch(() => {}); else it.v.pause(); draw(); } else open(items.indexOf(it)); } } downAt = null; });
+  stage.addEventListener('pointercancel', () => { dragging = false; downAt = null; stage.classList.remove('drag'); });
+  stage.addEventListener('wheel', e => { e.preventDefault(); touched = true; zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018))); }, { passive: false });
+  function zoomAt(cx, cy, f) { const smin = Math.min(vw(), vh()) / (2.3 * R), smax = 1.0; const ns = Math.max(smin, Math.min(smax, s * f)); const k = ns / s; tx = cx - (cx - tx) * k; ty = cy - (cy - ty) * k; s = ns; draw(); }
+  stage.addEventListener('touchstart', e => { touched = true; if (e.touches.length === 2) { pinch = dist(e); moved = true; dragging = false; downAt = null; } }, { passive: true });
   stage.addEventListener('touchmove', e => { if (e.touches.length === 2 && pinch) { const d = dist(e); const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2, cy = (e.touches[0].clientY + e.touches[1].clientY) / 2; zoomAt(cx, cy, d / pinch); pinch = d; } }, { passive: true });
   stage.addEventListener('touchend', e => { if (e.touches.length < 2) { pinch = null; dragging = false; moved = true; } });
   function dist(e) { const a = e.touches[0], b = e.touches[1]; return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
   document.getElementById('reset').onclick = () => home(true);
-  addEventListener('resize', () => { if (!touched) home(false); else apply(); });
+  addEventListener('resize', () => { size(); if (!touched) home(false); else draw(); });
 
-  /* ---------- visore: un pezzo alla volta, intero, con la didascalia sotto ---------- */
+  /* ---------- visore ---------- */
   const lb = document.getElementById('lb'), lbview = document.getElementById('lbview'), lbcap = document.getElementById('lbcap'), lbn = document.getElementById('lbn');
   let cur = -1;
   function open(i) {
     cur = (i + items.length) % items.length; const it = items[cur]; lb.classList.add('on'); lbn.textContent = (cur + 1) + ' di ' + items.length;
     items.forEach(x => { if (x.kind === 'vid') x.v.pause(); });
-    // ferma un eventuale video precedente nel visore
     lbview.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
     if (it.kind === 'img') {
       const im = new Image(); im.alt = ''; im.src = it.full || it.src; im.onerror = () => { if (im.src.indexOf(it.src) < 0) im.src = it.src; };
       lbview.innerHTML = ''; lbview.appendChild(im);
-      { const t = captionFor(it.key); lbcap.innerHTML = t ? '<b>' + it.key + '</b>' + t : ''; }
+      const t = C[it.key] || ''; lbcap.innerHTML = t ? '<b>' + it.key + '</b>' + t : '';
     } else if (it.kind === 'vid') {
       const v = document.createElement('video'); v.src = it.src; v.loop = true; v.controls = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.muted = !it.sound; v.volume = 0.5;
       lbview.innerHTML = ''; lbview.appendChild(v); v.play().catch(() => {});
-      lbcap.innerHTML = '<b>' + it.key + '</b>' + (it.cap || DEF);
+      lbcap.innerHTML = '<b>' + it.key + '</b>' + it.cap;
     } else {
       lbview.innerHTML = `<div class="card${it.white ? ' w' : ''}"><h3>${it.key}</h3>${it.cap}<small>${it.tag}</small></div>`;
       lbcap.innerHTML = '<b>' + it.tag + '</b>';
     }
     lb.scrollTop = 0;
   }
-  function close() { lb.classList.remove('on'); lbview.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; }); items.forEach(x => { if (x.kind === 'vid') x.v.play().catch(() => {}); }); }
+  function close() { lb.classList.remove('on'); lbview.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; }); items.forEach(x => { if (x.kind === 'vid' && started) x.v.play().catch(() => {}); }); draw(); }
   document.getElementById('lbx').onclick = close;
   document.getElementById('pv').onclick = () => open(cur - 1);
   document.getElementById('nx').onclick = () => open(cur + 1);
@@ -277,18 +279,22 @@
   lbview.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
   lbview.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) open(dx < 0 ? cur + 1 : cur - 1); });
 
+  window.__krom = { items, hit: (x, y) => hit(x, y), view: () => ({ s, tx, ty }) };
+
   /* ---------- avvio ---------- */
   (async () => {
+    size();
+    if (document.fonts) { try { await Promise.all([document.fonts.load('116px Anton'), document.fonts.load('42px Archivo'), document.fonts.load('500 28px "IBM Plex Mono"')]); } catch (_) {} }
     for (const f of fixed) await mkImg(f);
     TEXTS.forEach(mkTxt);
     for (const v of VIDEOS) await mkVid(v);
     cn.textContent = items.length; layout(); home(false);
     for (let i = 0; i < flow.length; i += 16) {
       const r = await Promise.all(flow.slice(i, i + 16).map(mkImg)); const ok = r.filter(Boolean).length;
-      cn.textContent = items.length; layout(); if (!touched) home(false);
+      cn.textContent = items.length; layout(); if (!touched) home(false); else draw();
       if (ok === 0) break;
     }
-    layout(); if (!touched) home(false);
+    layout(); if (!touched) home(false); else draw();
   })();
 })();
 </script>

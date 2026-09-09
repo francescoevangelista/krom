@@ -34,6 +34,11 @@ window.DEFAULT_CAPTION = '';
 window.RANGES = [];
 window.SKIP = [];
 
+// Video: si carica da solo se esiste in img/. Audio a metà volume, in loop.
+window.VIDEOS = [
+  { src: 'img/video.mp4', key: 'video', sound: true, caption: 'La direzione in movimento. Il filo si disegna solo in risposta a un gesto, mai da solo.' }
+];
+
 // Le dieci card di testo che compaiono nella spirale.
 window.TEXTS = [
   { title: 'Vendiamo l\'ingresso in una fam. Non un oggetto.', body: 'KROM è l\'unico brand di kendama che vende l\'ingresso in una fam invece di un oggetto, per ragazzi che vogliono stare insieme senza schermo, e che rifiuta di essere un giocattolo.', tag: 'La frase' },
