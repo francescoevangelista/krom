@@ -16,14 +16,15 @@
   #intro{position:fixed;inset:0;z-index:30;background:var(--blue);color:var(--off);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:opacity .6s}
   #intro.out{opacity:0;pointer-events:none}
   #intro .w{position:relative;height:1.2em;width:100%;font-family:"Anton",Impact,sans-serif;font-size:clamp(64px,16vw,220px);line-height:1;text-transform:uppercase;letter-spacing:-.01em;text-align:center}
-  #intro .w span{position:absolute;left:0;right:0;top:0;opacity:0;transition:opacity .7s}
+  #intro .w span{position:absolute;left:0;right:0;top:0;opacity:0;transition:opacity .7s;white-space:nowrap}
+  #intro .w #w2{font-size:.72em;top:.14em}
   #intro .w span.on{opacity:1}
   #intro .d{font-family:"IBM Plex Mono",monospace;font-size:13px;opacity:0;transition:opacity .7s;margin-top:18px;text-align:center;padding:0 20px}
   #intro .d.on{opacity:.9}
 
-  #concept{position:fixed;inset:0;z-index:25;background:var(--off);color:var(--ink);display:none;align-items:center;justify-content:center;overflow:auto;padding:24px}
+  #concept{position:fixed;inset:0;z-index:25;background:var(--off);color:var(--ink);display:none;overflow:auto;padding:24px;-webkit-overflow-scrolling:touch}
   #concept.on{display:flex}
-  #concept .c{max-width:640px;width:100%;font-size:clamp(17px,2vw,20px);line-height:1.5}
+  #concept .c{max-width:640px;width:100%;margin:auto;font-size:clamp(17px,2vw,20px);line-height:1.5;padding:12px 0 40px}
   #concept .k{font:500 13px "IBM Plex Mono",monospace;color:var(--blue);margin:0 0 18px}
   #concept h2{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(38px,7vw,80px);line-height:.92;color:var(--blue);margin:0 0 .4em}
   #concept p{margin:0 0 1em;max-width:60ch}
@@ -95,7 +96,7 @@
   <a class="btn" href="leggi.html">Leggi la direzione</a>
 </header>
 
-<div id="stage"><canvas id="cv"></canvas><div id="media"></div></div>
+<div id="stage"><canvas id="cv"></canvas><div id="media"></div><img id="gifov" alt="" style="position:absolute;left:0;top:0;display:none;pointer-events:none;object-fit:contain;background:#fff"></div>
 
 <div id="count"><span id="cn">0</span><span>pezzi</span></div>
 <div id="hint">Trascina. Pinch o rotellina per lo zoom. Tocca per aprire.</div>
@@ -109,13 +110,13 @@
   <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
 </div>
 
-<script src="captions.js?v=9"></script>
+<script src="captions.js?v=10"></script>
 <script>
 (() => {
   const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], VIDEOS = window.VIDEOS || [], SKIP = new Set(window.SKIP || []);
   const BLUE = '#0000A5', OFF = '#F8FAFA', INK = '#060808';
   const cv = document.getElementById('cv'), ctx = cv.getContext('2d', { alpha: false });
-  const stage = document.getElementById('stage'), mediaBox = document.getElementById('media'), cn = document.getElementById('cn');
+  const stage = document.getElementById('stage'), mediaBox = document.getElementById('media'), cn = document.getElementById('cn'), gifov = document.getElementById('gifov');
   const items = []; const TILE = 520; let R = 2000;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
 
@@ -148,7 +149,7 @@
     if (SKIP.has(f.key)) return Promise.resolve(true);
     return new Promise(res => {
       const im = new Image(); im.decoding = 'async';
-      im.onload = async () => { const bmp = await thumb(im); items.push({ kind: 'img', key: f.key, src: f.src, full: f.full, bmp, ar: im.naturalWidth / im.naturalHeight }); res(true); };
+      im.onload = async () => { const isGif = /\.gif$/i.test(f.src); const bmp = isGif ? im : await thumb(im); items.push({ kind: 'img', key: f.key, src: f.src, full: f.full, bmp, gif: isGif, ar: im.naturalWidth / im.naturalHeight }); res(true); };
       im.onerror = () => res(false);
       im.src = f.src;
     });
@@ -209,9 +210,15 @@
       // solo i pezzi dentro lo schermo
       const x0 = -tx / s, y0 = -ty / s, x1 = (vw() - tx) / s, y1 = (vh() - ty) / s;
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium';
-      let anyVideo = false;
+      let anyVideo = false; let gifShown = false;
       for (const it of items) {
         if (it.x + it.w < x0 || it.x > x1 || it.y + it.h < y0 || it.y > y1) continue;
+        if (it.gif) { // la gif vera, sopra il canvas, così si anima
+          const ar = it.ar || 1; let w = it.w, h = it.w / ar; if (h > it.h) { h = it.h; w = it.h * ar; }
+          const g = gifov; g.src !== location.href.replace(/[^/]*$/, '') + it.src && !g.dataset.k && (g.src = it.src, g.dataset.k = '1');
+          g.style.display = 'block'; g.style.transform = `translate(${tx + (it.x + (it.w - w) / 2) * s}px,${ty + (it.y + (it.h - h) / 2) * s}px)`; g.style.width = (w * s) + 'px'; g.style.height = (h * s) + 'px'; gifShown = true;
+          ctx.fillStyle = '#fff'; ctx.fillRect(it.x, it.y, it.w, it.h); continue;
+        }
         ctx.fillStyle = '#fff'; ctx.fillRect(it.x, it.y, it.w, it.h);
         if (it.kind === 'vid') { if (it.v.readyState >= 2) { ctx.drawImage(it.v, it.x, it.y, it.w, it.h); if (!it.v.paused) anyVideo = true; } }
         else if (it.bmp) {
@@ -221,6 +228,7 @@
         }
         ctx.lineWidth = 1 / s; ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.strokeRect(it.x, it.y, it.w, it.h);
       }
+      if (!gifShown) gifov.style.display = 'none';
       if (anyVideo && !lb.classList.contains('on')) draw(); // i video si ridisegnano finché suonano
     });
   }
@@ -236,7 +244,7 @@
   function hit(px, py) { const wx = (px - tx) / s, wy = (py - ty) / s; for (let i = items.length - 1; i >= 0; i--) { const it = items[i]; if (wx >= it.x && wx <= it.x + it.w && wy >= it.y && wy <= it.y + it.h) return it; } return null; }
   stage.addEventListener('pointerdown', e => { touched = true; dragging = true; moved = false; downAt = [e.clientX, e.clientY]; lx = e.clientX; ly = e.clientY; stage.classList.add('drag'); try { stage.setPointerCapture(e.pointerId); } catch (_) {} });
   stage.addEventListener('pointermove', e => { if (!dragging || pinch) return; const dx = e.clientX - lx, dy = e.clientY - ly; if (Math.abs(e.clientX - downAt[0]) + Math.abs(e.clientY - downAt[1]) > 6) moved = true; tx += dx; ty += dy; lx = e.clientX; ly = e.clientY; draw(); });
-  stage.addEventListener('pointerup', e => { dragging = false; stage.classList.remove('drag'); if (!moved && !pinch && downAt) { const it = hit(e.clientX, e.clientY); if (it) { if (it.kind === 'vid') { if (it.v.paused) it.v.play().catch(() => {}); else it.v.pause(); draw(); } else open(items.indexOf(it)); } } downAt = null; });
+  stage.addEventListener('pointerup', e => { dragging = false; stage.classList.remove('drag'); if (!moved && !pinch && downAt) { const it = hit(e.clientX, e.clientY); if (it) open(items.indexOf(it)); } downAt = null; });
   stage.addEventListener('pointercancel', () => { dragging = false; downAt = null; stage.classList.remove('drag'); });
   stage.addEventListener('wheel', e => { e.preventDefault(); touched = true; zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018))); }, { passive: false });
   function zoomAt(cx, cy, f) { const smin = Math.min(vw(), vh()) / (2.3 * R), smax = 1.0; const ns = Math.max(smin, Math.min(smax, s * f)); const k = ns / s; tx = cx - (cx - tx) * k; ty = cy - (cy - ty) * k; s = ns; draw(); }
@@ -251,7 +259,7 @@
   const lb = document.getElementById('lb'), lbview = document.getElementById('lbview'), lbcap = document.getElementById('lbcap'), lbn = document.getElementById('lbn');
   let cur = -1;
   function open(i) {
-    cur = (i + items.length) % items.length; const it = items[cur]; lb.classList.add('on'); lbn.textContent = (cur + 1) + ' di ' + items.length;
+    cur = (i + items.length) % items.length; const it = items[cur]; lb.classList.add('on'); lbn.textContent = (cur + 1) + ' di ' + items.length; gifov.style.display = 'none';
     items.forEach(x => { if (x.kind === 'vid') x.v.pause(); });
     lbview.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
     if (it.kind === 'img') {
