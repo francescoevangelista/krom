@@ -21,6 +21,13 @@
   #intro .d{font-family:"IBM Plex Mono",monospace;font-size:13px;opacity:0;transition:opacity .7s;margin-top:18px;text-align:center;padding:0 20px}
   #intro .d.on{opacity:.9}
 
+  #concept{position:fixed;inset:0;z-index:25;background:var(--off);color:var(--ink);display:none;align-items:center;justify-content:center;overflow:auto;padding:24px}
+  #concept.on{display:flex}
+  #concept .c{max-width:640px;width:100%;font-size:clamp(17px,2vw,20px);line-height:1.5}
+  #concept .k{font:500 13px "IBM Plex Mono",monospace;color:var(--blue);margin:0 0 18px}
+  #concept h2{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(38px,7vw,80px);line-height:.92;color:var(--blue);margin:0 0 .4em}
+  #concept p{margin:0 0 1em;max-width:60ch}
+  #concept .btn.p{background:var(--blue);color:var(--off);font-size:15px;padding:14px 22px;margin-top:8px}
   #stage{position:fixed;inset:0;cursor:grab;touch-action:none;overflow:hidden;
     background:
       radial-gradient(ellipse 22% 18% at 18% 30%, rgba(0,0,165,.05), transparent 70%),
@@ -78,6 +85,17 @@
 </head>
 <body>
 
+<div id="concept" aria-label="Il concept">
+  <div class="c">
+    <p class="k">Direzione B. Prima di guardare, un minuto di lettura.</p>
+    <h2>Vendiamo l'ingresso in una fam. Non un oggetto.</h2>
+    <p>KROM è l'unico brand di kendama che vende l'ingresso in una fam invece di un oggetto, per ragazzi che vogliono stare insieme senza schermo, e che rifiuta di essere un giocattolo.</p>
+    <p>Quello che vedete dopo è un concetto solo, ripetuto in modi diversi: ovunque arriva un kendama, la gente si mette in cerchio. Guardate quattro cose. Le facce, sempre visibili. Il blu, che è l'oggetto in mano a qualcuno, non il logo. Il filo, che collega. E nessun telefono, in nessuna immagine.</p>
+    <p>Le immagini sono generate per mostrare la direzione. Le foto vere si fanno con i player. Le card blu e bianche dentro la spirale sono le regole; il testo intero è nella pagina "Leggi la direzione".</p>
+    <button class="btn p" id="go" type="button">Guarda</button>
+  </div>
+</div>
+
 <div id="intro" role="button" tabindex="0" aria-label="Entra">
   <div class="w"><span id="w1">KROM</span><span id="w2">Direzione B</span></div>
   <div class="d" id="w3">Draft del 9 settembre 2026. Tocca per entrare.</div>
@@ -104,7 +122,7 @@
   <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
 </div>
 
-<script src="captions.js?v=6"></script>
+<script src="captions.js?v=7"></script>
 <script>
 (() => {
   const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [], HIDDEN = new Set(window.HIDDEN || []);
@@ -126,12 +144,20 @@
   const intro = document.getElementById('intro');
   const w1 = document.getElementById('w1'), w2 = document.getElementById('w2'), w3 = document.getElementById('w3');
   let entered = false;
+  const concept = document.getElementById('concept');
   function enter() {
     if (entered) return; entered = true;
     intro.classList.add('out'); setTimeout(() => intro.remove(), 700);
-    // i video partono qui, dentro il gesto dell'utente
+    concept.classList.add('on'); concept.scrollTop = 0;
+  }
+  let started = false;
+  function go() {
+    if (started) return; started = true;
+    concept.classList.remove('on');
+    // i video partono qui, dentro il gesto dell'utente: così possono avere l'audio
     items.forEach(it => { if (it.kind === 'vid') { it.v.muted = !it.sound; it.v.volume = 0.5; it.v.play().catch(() => { it.v.muted = true; it.v.play().catch(() => {}); }); } });
   }
+  document.getElementById('go').addEventListener('click', go);
   setTimeout(() => w1.classList.add('on'), 100);
   setTimeout(() => { w1.classList.remove('on'); w2.classList.add('on'); }, 1500);
   setTimeout(() => w3.classList.add('on'), 2100);
@@ -154,7 +180,7 @@
   function mkVid(v) {
     return new Promise(res => {
       const vd = document.createElement('video'); vd.src = v.src; vd.loop = true; vd.muted = true; vd.playsInline = true; vd.setAttribute('playsinline', ''); vd.preload = 'auto';
-      vd.onloadedmetadata = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(vd); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'vid', key: v.key, src: v.src, v: vd, sound: !!v.sound, cap: v.caption || '', ar: (vd.videoWidth / vd.videoHeight) || (16 / 9) }); if (entered) { vd.muted = !v.sound; vd.volume = 0.5; vd.play().catch(() => {}); } res(true); };
+      vd.onloadedmetadata = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(vd); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'vid', key: v.key, src: v.src, v: vd, sound: !!v.sound, cap: v.caption || '', ar: (vd.videoWidth / vd.videoHeight) || (16 / 9) }); if (started) { vd.muted = !v.sound; vd.volume = 0.5; vd.play().catch(() => {}); } res(true); };
       vd.onerror = () => res(false);
     });
   }
