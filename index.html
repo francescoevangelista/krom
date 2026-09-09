@@ -111,7 +111,7 @@
 <div id="stage"><div id="world"><div class="ring" id="ring"></div></div></div>
 
 <div id="count"><span id="cn">0</span><span>pezzi</span></div>
-<div id="hint">Trascina. Zoom con due dita o con la rotellina. Tocca un'immagine per aprirla.</div>
+<div id="hint">Trascina. Pinch o rotellina per lo zoom. Tocca per aprire.</div>
 <button class="btn" id="reset" type="button">Ricomincia</button>
 
 <div id="lb" role="dialog" aria-modal="true" aria-label="Visore">
@@ -122,10 +122,10 @@
   <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
 </div>
 
-<script src="captions.js?v=7"></script>
+<script src="captions.js?v=8"></script>
 <script>
 (() => {
-  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [], HIDDEN = new Set(window.HIDDEN || []);
+  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [], SKIP = new Set(window.SKIP || []);
   const DEF = window.DEFAULT_CAPTION || '';
   const world = document.getElementById('world'), stage = document.getElementById('stage'), ring = document.getElementById('ring');
   const cn = document.getElementById('cn');
@@ -169,7 +169,7 @@
   const flow = []; for (let n = 1; n <= 400; n++) { const k = String(n).padStart(3, '0'); if (SKIP.has('flow' + k)) continue; flow.push({ src: 'img/flow/' + k + '.jpg', full: 'img/full/' + k + '.jpg', key: 'flow' + k }); }
 
   function mkImg(f) {
-    if (HIDDEN.has(f.key)) return Promise.resolve(true);
+    if (SKIP.has(f.key)) return Promise.resolve(true);
     return new Promise(res => {
       const im = new Image(); im.decoding = 'async'; im.draggable = false; im.alt = '';
       im.onload = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(im); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'img', key: f.key, src: f.src, full: f.full, ar: im.naturalWidth / im.naturalHeight }); res(true); };
