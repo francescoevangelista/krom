@@ -104,10 +104,10 @@
   <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
 </div>
 
-<script src="captions.js?v=5"></script>
+<script src="captions.js?v=6"></script>
 <script>
 (() => {
-  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [];
+  const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], RANGES = window.RANGES || [], VIDEOS = window.VIDEOS || [], HIDDEN = new Set(window.HIDDEN || []);
   const DEF = window.DEFAULT_CAPTION || '';
   const world = document.getElementById('world'), stage = document.getElementById('stage'), ring = document.getElementById('ring');
   const cn = document.getElementById('cn');
@@ -140,9 +140,10 @@
 
   /* ---------- sorgenti ---------- */
   const fixed = (window.FIXED || []).map(n => ({ src: 'img/' + n, key: n.replace(/\.[a-z]+$/, '') }));
-  const flow = []; for (let n = 1; n <= 400; n++) { const k = String(n).padStart(3, '0'); flow.push({ src: 'img/flow/' + k + '.jpg', full: 'img/full/' + k + '.jpg', key: 'flow' + k }); }
+  const flow = []; for (let n = 1; n <= 400; n++) { const k = String(n).padStart(3, '0'); if (SKIP.has('flow' + k)) continue; flow.push({ src: 'img/flow/' + k + '.jpg', full: 'img/full/' + k + '.jpg', key: 'flow' + k }); }
 
   function mkImg(f) {
+    if (HIDDEN.has(f.key)) return Promise.resolve(true);
     return new Promise(res => {
       const im = new Image(); im.decoding = 'async'; im.draggable = false; im.alt = '';
       im.onload = () => { const el = document.createElement('div'); el.className = 'it'; const inn = document.createElement('div'); inn.className = 'in'; inn.appendChild(im); el.appendChild(inn); el.dataset.i = items.length; world.appendChild(el); items.push({ el, kind: 'img', key: f.key, src: f.src, full: f.full, ar: im.naturalWidth / im.naturalHeight }); res(true); };
@@ -228,7 +229,7 @@
     if (it.kind === 'img') {
       const im = new Image(); im.alt = ''; im.src = it.full || it.src; im.onerror = () => { if (im.src.indexOf(it.src) < 0) im.src = it.src; };
       lbview.innerHTML = ''; lbview.appendChild(im);
-      lbcap.innerHTML = '<b>' + it.key + '</b>' + captionFor(it.key);
+      { const t = captionFor(it.key); lbcap.innerHTML = t ? '<b>' + it.key + '</b>' + t : ''; }
     } else if (it.kind === 'vid') {
       const v = document.createElement('video'); v.src = it.src; v.loop = true; v.controls = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.muted = !it.sound; v.volume = 0.5;
       lbview.innerHTML = ''; lbview.appendChild(v); v.play().catch(() => {});

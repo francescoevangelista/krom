@@ -27,25 +27,12 @@ window.CAPTIONS = {
 };
 
 // Didascalia usata quando un'immagine non ha la sua.
-window.DEFAULT_CAPTION = 'Immagine di direzione.';
+window.DEFAULT_CAPTION = '';
 
 // Didascalie a blocchi per le immagini di Flow: [primo numero, ultimo numero, testo].
 // Metti i file in ordine per tema, poi scrivi qui i blocchi. Esempio (da cambiare con i tuoi numeri):
-window.RANGES = [
-  [1, 20, 'La foto. Il caos: la sesh, il cerchio, il trick appena atterrato e la faccia dopo. Facce sempre visibili, nessuno in posa, nessun telefono. Flash o pellicola, grana vera.'],
-  [21, 35, 'La foto. La quiete: le mani, la concentrazione, due persone, un kendama fermo. È il trenta per cento che fa respirare il feed.'],
-  [36, 55, 'Il kendama DNA. Faggio, tama blu con la banda chiara attorno al foro, lo scarabocchio inciso che finisce nel foro, il box logo inciso sulla base. Incisione, non adesivo.'],
-  [56, 70, 'Le scatole. Un solo filo inciso attraversa i sei fronti: ogni scatola ne mostra un pezzo, insieme formano il kendama e il nodo. La scatola è il biglietto.'],
-  [71, 90, 'Il sito. Una foto di persone, una frase, un bottone. I prodotti in mano, in posti veri, mai su fondo bianco. Il blu solo come linea.'],
-  [91, 105, 'Le card e i poster. Campo blu, urlo in maiuscolo, il filo che entra nel testo, il box logo in basso. La voce tecno sopra la voce tribale.'],
-  [106, 120, 'La carta. Fanzine, adesivi, fotocopie, due colori. La voce tribale: mano, grana, nastro, marker.'],
-  [121, 140, 'Studi e prove. Il filo che disegna, le firme, le varianti scartate. Restano perché spiegano come si è arrivati alla direzione.']
-];
-
-// Video: si caricano da soli se esistono in img/. video.mp4 con audio, gif.mp4 muto.
-window.VIDEOS = [
-  { src: 'img/video.mp4', key: 'video', sound: true, caption: 'La direzione in movimento. Il filo si disegna solo in risposta a un gesto, mai da solo.' }
-];
+window.RANGES = [];
+window.SKIP = [];
 
 // Le dieci card di testo che compaiono nella spirale.
 window.TEXTS = [
