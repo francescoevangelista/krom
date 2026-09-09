@@ -9,11 +9,11 @@
 <style>
   :root{--blue:#0000A5;--off:#F8FAFA;--ink:#060808;--red:#CF3B16;--bg:#EEF0F1}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Archivo",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;height:100dvh;overflow:hidden;position:fixed;inset:0;width:100%;background:var(--bg);color:var(--ink);font-family:"Archivo",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
   button,a{font-family:inherit}
   a:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 
-  #intro{position:fixed;inset:0;z-index:30;background:var(--blue);color:var(--off);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:opacity .6s}
+  #intro{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;z-index:30;background:var(--blue);color:var(--off);display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:opacity .6s}
   #intro.out{opacity:0;pointer-events:none}
   #intro .w{position:relative;height:1.2em;width:100%;font-family:"Anton",Impact,sans-serif;font-size:clamp(64px,16vw,220px);line-height:1;text-transform:uppercase;letter-spacing:-.01em;text-align:center}
   #intro .w span{position:absolute;left:0;right:0;top:0;opacity:0;transition:opacity .7s;white-space:nowrap}
@@ -22,14 +22,14 @@
   #intro .d{font-family:"IBM Plex Mono",monospace;font-size:13px;opacity:0;transition:opacity .7s;margin-top:18px;text-align:center;padding:0 20px}
   #intro .d.on{opacity:.9}
 
-  #concept{position:fixed;inset:0;z-index:25;background:var(--off);color:var(--ink);display:none;overflow:auto;padding:24px;-webkit-overflow-scrolling:touch}
+  #concept{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;z-index:25;background:var(--off);color:var(--ink);display:none;overflow:auto;padding:24px;-webkit-overflow-scrolling:touch}
   #concept.on{display:flex}
   #concept .c{max-width:640px;width:100%;margin:auto;font-size:clamp(17px,2vw,20px);line-height:1.5;padding:12px 0 40px}
   #concept .k{font:500 13px "IBM Plex Mono",monospace;color:var(--blue);margin:0 0 18px}
   #concept h2{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(38px,7vw,80px);line-height:.92;color:var(--blue);margin:0 0 .4em}
   #concept p{margin:0 0 1em;max-width:60ch}
 
-  #stage{position:fixed;inset:0;cursor:grab;touch-action:none;overflow:hidden;background:var(--bg)}
+  #stage{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;cursor:grab;touch-action:none;overflow:hidden;background:var(--bg)}
   #stage.drag{cursor:grabbing}
   canvas{display:block;width:100%;height:100%}
   #media{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none}
@@ -110,7 +110,7 @@
   <div class="bar"><button class="mini" id="pv2" type="button" aria-label="Precedente">‹</button><div class="cap" id="lbcap"></div><button class="mini" id="nx2" type="button" aria-label="Successiva">›</button></div>
 </div>
 
-<script src="captions.js?v=10"></script>
+<script src="captions.js?v=11"></script>
 <script>
 (() => {
   const C = window.CAPTIONS || {}, TEXTS = window.TEXTS || [], VIDEOS = window.VIDEOS || [], SKIP = new Set(window.SKIP || []);
@@ -194,7 +194,7 @@
 
   /* ---------- disegno ---------- */
   let s = 0.2, tx = 0, ty = 0, raf = 0;
-  const vw = () => innerWidth, vh = () => innerHeight;
+  const vw = () => stage.clientWidth || innerWidth, vh = () => stage.clientHeight || innerHeight;
   function size() { cv.width = Math.round(vw() * dpr); cv.height = Math.round(vh() * dpr); }
   function draw() {
     if (raf) return;
@@ -253,7 +253,10 @@
   stage.addEventListener('touchend', e => { if (e.touches.length < 2) { pinch = null; dragging = false; moved = true; } });
   function dist(e) { const a = e.touches[0], b = e.touches[1]; return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
   document.getElementById('reset').onclick = () => home(true);
-  addEventListener('resize', () => { size(); if (!touched) home(false); else draw(); });
+  function onResize() { size(); if (!touched) home(false); else draw(); }
+  addEventListener('resize', onResize);
+  addEventListener('orientationchange', () => setTimeout(onResize, 300));
+  if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 
   /* ---------- visore ---------- */
   const lb = document.getElementById('lb'), lbview = document.getElementById('lbview'), lbcap = document.getElementById('lbcap'), lbn = document.getElementById('lbn');
